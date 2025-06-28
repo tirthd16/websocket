@@ -1,6 +1,6 @@
 import pkg, { BufferJSON, WAProto } from 'baileys';
 const { proto,initAuthCreds } = pkg;
-import { supabase } from './supabase.js';
+import { getSupabase } from './supabase.js';
 
 export const useSupabaseAuthState = async (clientId) => {
   const table = 'bailey_auth';
@@ -8,7 +8,7 @@ export const useSupabaseAuthState = async (clientId) => {
   const makeId = (type, id) => `${clientId}_${type}-${id}`;
 
 const writeData = async (type, id, value) => {
-  await supabase
+  await getSupabase()
     .from(table)
     .upsert({
       id: makeId(type, id),
@@ -17,7 +17,7 @@ const writeData = async (type, id, value) => {
     });
 };
 const readData = async (type, id = '') => {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from(table)
     .select('data')
     .eq('id', makeId(type, id))

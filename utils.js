@@ -1,7 +1,7 @@
-import { supabase } from './supabase.js';
+import { getSupabase } from './supabase.js';
 
 export async function clientIdExists(clientId) {
-  const { data, error } = await supabase.auth.admin.listUsers();
+  const { data, error } = await getSupabase().auth.admin.listUsers();
 
   if (error) {
     throw error;
