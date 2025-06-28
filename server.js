@@ -12,7 +12,7 @@ const server = createServer((req, res) => {
 
 // Create a WebSocket server instance
 const wss = new WebSocket.Server({ noServer:true }); // Attach to the HTTP server
-let baileysSock = null;
+let baileysSock = {};
 let waConnected = {}
 
 server.on('upgrade', async (request, socket, head) => {
@@ -36,15 +36,15 @@ server.on('upgrade', async (request, socket, head) => {
 // Event listener for new connections
 wss.on('connection', async (ws,token) => {
     waConnected[token]?waConnected[token].push(1):waConnected[token] = [1]
-    if (baileysSock?.getCurrentSocket()) {
+    if (baileysSock[token]?.getCurrentSocket()) {
         const msg = {
             dataType: "conn",
             data: "open"
         };
         ws.send(JSON.stringify(msg));
     } else {
-        baileysSock = new WASocketManager(ws, token); // ✅ await here
-        await baileysSock.connect()
+        baileysSock[token] = new WASocketManager(ws, token); // ✅ await here
+        await baileysSock[token].connect()
     }
     // Store reference to the Baileys socket for this WebSocket connection
 
@@ -62,7 +62,7 @@ wss.on('connection', async (ws,token) => {
         if (message.dataType == "message") {
             try {
                 const number = getJid(message.data.number)
-                const result = await sendMessage(baileysSock.getCurrentSocket(), number, message.data.text)
+                const result = await sendMessage(baileysSock[token].getCurrentSocket(), number, message.data.text)
                 ws.send(JSON.stringify(result))
             } catch (error) {
                 const result = { dataType: "error", data: "Couldn't send message" }
@@ -77,8 +77,8 @@ wss.on('connection', async (ws,token) => {
         waConnected[token].pop()
         console.log('Client disconnected');
         // Close baileys connection on disconnect
-        if (baileysSock.getCurrentSocket() && waConnected[token].length === 0) {
-            baileysSock.cleanup("bailey-close");
+        if (baileysSock[token].getCurrentSocket() && waConnected[token].length === 0) {
+            baileysSock[token].cleanup("bailey-close");
         }
     });
 
