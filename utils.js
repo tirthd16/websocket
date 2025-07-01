@@ -43,7 +43,7 @@ export async function onWhatsapp(sock, number) {
     return isOnWhatsapp.length != 0 && isOnWhatsapp[0].exists
 }
 
-export async function sendMessage(sock, number, message) {
+export async function sendMessage(sock, number, message,messageId) {
     const onWhatsApp = await onWhatsapp(sock, number)
     if (onWhatsApp) {
         try {
@@ -55,7 +55,8 @@ export async function sendMessage(sock, number, message) {
             return {
                 dataType: "msgStatus", data: {
                     number: getNumber(number),
-                    status: "sent"
+                    status: "sent",
+                    messageId:messageId
                 }
             }
         } catch (error) {
@@ -63,12 +64,19 @@ export async function sendMessage(sock, number, message) {
             return {
                 dataType: "msgStatus", data: {
                     number: getNumber(number),
-                    status: "error"
+                    status: "error",
+                reason: "some error occured"
                 }
             }
         }
     } else {
-        return { dataType: "error", data: "invalid number" }
+        return {
+            dataType: "msgStatus", data: {
+                number: getNumber(number),
+                status: "error",
+                reason: "Number not registered on WhatsApp"
+            }
+        }
     }
 }
 

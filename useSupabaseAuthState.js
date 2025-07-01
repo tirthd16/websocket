@@ -12,6 +12,7 @@ const writeData = async (type, id, value) => {
     .from(table)
     .upsert({
       id: makeId(type, id),
+        client_id:clientId,
       type,
       data: JSON.parse(JSON.stringify(value, BufferJSON.replacer))
     });
@@ -66,6 +67,12 @@ const readData = async (type, id = '') => {
     },
     saveCreds: async () => {
       await writeData('creds', '', creds);
+    },
+    deleteCreds: async () => {
+        await getSupabase()
+        .from('bailey_auth')
+          .delete()
+          .eq('client_id',clientId)
     }
   };
 };

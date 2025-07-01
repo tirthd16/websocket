@@ -11,7 +11,7 @@ export class WASocketManager {
     }
     
     async connect() {
-        const { state, saveCreds } = await useSupabaseAuthState(this.filePath)
+        const { state, saveCreds, deleteCreds } = await useSupabaseAuthState(this.filePath)
         const sock = makeWASocket({
             logger,
             auth: state,
@@ -20,6 +20,7 @@ export class WASocketManager {
         this.currentSocket = sock
         
         sock.ev.process(async (events) => {
+                console.log(events)
             if (events['connection.update']) {
                 const update = events['connection.update']
                 const { connection, lastDisconnect, qr } = update
@@ -35,14 +36,18 @@ export class WASocketManager {
                 
                 if (connection === 'close') {
                     console.log(lastDisconnect)
-                    if (
-                        (lastDisconnect?.error)?.output?.statusCode !== DisconnectReason.loggedOut
-                        && lastDisconnect?.error !== "bailey-close"
+                    if ( (lastDisconnect?.error)?.output?.statusCode == DisconnectReason.loggedOut ) {
+                        console.log('You are logged out.')
+                        deleteCreds()
+                        this.reconnect()
+                            
+                    } else if (
+                         (lastDisconnect?.error)?.output?.statusCode == DisconnectReason.restartRequired 
                         && !this.isReconnecting
                     ) {
                         this.reconnect()
                     } else if (!this.isReconnecting) {
-                        console.log('Connection closed. You are logged out.')
+                        console.log('Connection closed.')
                         this.cleanup()
                     }
                 }
@@ -66,7 +71,10 @@ export class WASocketManager {
     }
     
     async reconnect() {
-        if (this.isReconnecting) return
+        if (this.isReconnecting) {
+            console.log("Already reconnecting")
+            return
+        }
         
         this.isReconnecting = true
         console.log('Attempting to reconnect...')
@@ -77,16 +85,15 @@ export class WASocketManager {
             this.currentSocket = null
         }
         
-        setTimeout(async () => {
             try {
                 await this.connect()
                 console.log('Reconnected successfully')
             } catch (error) {
                 console.error('Reconnection failed:', error)
-                this.isReconnecting = false
                 // Could implement exponential backoff here
+            } finally {
+                this.isReconnecting = false
             }
-        }, 2000)
     }
     
     cleanup(msg=null) {

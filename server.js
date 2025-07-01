@@ -62,7 +62,7 @@ wss.on('connection', async (ws,token) => {
         if (message.dataType == "message") {
             try {
                 const number = getJid(message.data.number)
-                const result = await sendMessage(baileysSock[token].getCurrentSocket(), number, message.data.text)
+                const result = await sendMessage(baileysSock[token].getCurrentSocket(), number, message.data.text,message.data.messageId)
                 ws.send(JSON.stringify(result))
             } catch (error) {
                 const result = { dataType: "error", data: "Couldn't send message" }
