@@ -1,4 +1,5 @@
 import WebSocket from 'ws';
+import 'dotenv/config'
 import { createServer } from 'http'
 import { authenticate } from './auth.js';
 import { getJid, logger, sendMessage } from './utils.js';
